@@ -1,0 +1,1362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Life Calendar - Enhanced</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .main-container {
+            max-width: 1600px;
+            margin: 0 auto;
+            display: flex;
+            gap: 20px;
+        }
+        
+        .sidebar {
+            width: 320px;
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-height: calc(100vh - 40px);
+            overflow-y: auto;
+            position: sticky;
+            top: 20px;
+        }
+        
+        .sidebar h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+        
+        .sidebar-section {
+            margin-bottom: 25px;
+        }
+        
+        .sidebar-section h3 {
+            color: #555;
+            font-size: 1.1em;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .add-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 4px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.85em;
+        }
+        
+        .add-btn:hover {
+            background: #218838;
+        }
+        
+        .library-item {
+            background: #f8f9fa;
+            padding: 10px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+            cursor: grab;
+            transition: all 0.2s;
+        }
+        
+        .library-item:hover {
+            background: #e9ecef;
+            transform: translateX(5px);
+        }
+        
+        .library-item:active {
+            cursor: grabbing;
+        }
+        
+        .library-item-name {
+            font-weight: 600;
+            font-size: 0.9em;
+            margin-bottom: 4px;
+            color: #333;
+        }
+        
+        .library-item-link {
+            font-size: 0.75em;
+            color: #667eea;
+            word-break: break-all;
+        }
+        
+        .library-item-actions {
+            display: flex;
+            gap: 5px;
+            margin-top: 8px;
+        }
+        
+        .ai-prompt-item {
+            background: #e7f3ff;
+            padding: 10px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            border-left: 4px solid #007bff;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+        
+        .ai-prompt-item:hover {
+            background: #d0e9ff;
+            transform: translateX(5px);
+        }
+        
+        .ai-prompt-item.copied {
+            background: #d4edda;
+            border-left-color: #28a745;
+        }
+        
+        .ai-prompt-title {
+            font-weight: 600;
+            font-size: 0.9em;
+            margin-bottom: 4px;
+            color: #004085;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .ai-prompt-text {
+            font-size: 0.8em;
+            color: #555;
+            line-height: 1.4;
+            font-style: italic;
+        }
+        
+        .copy-indicator {
+            font-size: 0.7em;
+            color: #28a745;
+            font-weight: 600;
+            display: none;
+        }
+        
+        .ai-prompt-actions {
+            display: flex;
+            gap: 5px;
+            margin-top: 8px;
+        }
+        
+        .btn-small {
+            padding: 3px 8px;
+            font-size: 0.75em;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .btn-delete {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .btn-edit-lib {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .container {
+            flex: 1;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 3px solid #667eea;
+        }
+        
+        h1 {
+            color: #667eea;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            color: #666;
+            font-size: 1.1em;
+        }
+        
+        .guide {
+            background: #f0f7ff;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            margin-bottom: 30px;
+            border-radius: 8px;
+        }
+        
+        .guide h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        
+        .guide ul {
+            margin-left: 20px;
+            color: #444;
+            line-height: 1.8;
+        }
+        
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .day-block {
+            background: white;
+            border: 3px solid #e0e0e0;
+            border-radius: 15px;
+            padding: 0;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            min-height: 500px;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .day-block:hover {
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+            border-color: #667eea;
+            transform: translateY(-5px);
+        }
+        
+        .day-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .day-name {
+            font-size: 1.8em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .day-suggestion {
+            font-size: 0.9em;
+            opacity: 0.95;
+            font-style: italic;
+        }
+        
+        .day-content {
+            padding: 15px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .section-compact {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 10px;
+            min-height: 60px;
+        }
+        
+        .section-compact.drop-zone {
+            border: 2px dashed #667eea;
+            background: #f0f7ff;
+        }
+        
+        .section-title-compact {
+            font-weight: 700;
+            font-size: 0.85em;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 6px;
+        }
+        
+        .add-activity-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 2px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.7em;
+        }
+        
+        .exercise-section { border-left: 4px solid #28a745; }
+        .meal-section { border-left: 4px solid #fd7e14; }
+        .declutter-section { border-left: 4px solid #dc3545; }
+        .selfcare-section { border-left: 4px solid #6f42c1; }
+        .chore-section { border-left: 4px solid #17a2b8; }
+        .custom-section { border-left: 4px solid #ffc107; }
+        
+        .activity-item {
+            font-size: 0.85em;
+            padding: 6px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 8px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .activity-item:last-child {
+            border-bottom: none;
+        }
+        
+        .activity-text {
+            flex: 1;
+            line-height: 1.4;
+        }
+        
+        .activity-name-compact {
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .activity-type-compact {
+            font-size: 0.9em;
+            color: #666;
+        }
+        
+        .activity-buttons {
+            display: flex;
+            gap: 4px;
+            flex-shrink: 0;
+        }
+        
+        .btn-compact {
+            padding: 4px 8px;
+            font-size: 0.75em;
+            border-radius: 4px;
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        
+        .btn-link {
+            background: #667eea;
+            color: white;
+        }
+        
+        .btn-link:hover {
+            background: #5568d3;
+        }
+        
+        .btn-edit {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .btn-edit:hover {
+            background: #5a6268;
+        }
+        
+        .btn-remove {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .btn-remove:hover {
+            background: #c82333;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 500px;
+            width: 90%;
+        }
+        
+        .modal-content h3 {
+            margin-bottom: 20px;
+            color: #667eea;
+        }
+        
+        .modal-content label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #555;
+        }
+        
+        .modal-content input, .modal-content textarea {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+        }
+        
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+        
+        .btn-save {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        
+        .btn-cancel {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        
+        .category-manager {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        
+        .category-manager h3 {
+            color: #856404;
+            margin-bottom: 10px;
+        }
+        
+        .category-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px;
+            background: white;
+            margin-bottom: 5px;
+            border-radius: 5px;
+        }
+
+        @media (max-width: 1200px) {
+            .main-container {
+                flex-direction: column;
+            }
+            .sidebar {
+                width: 100%;
+                position: relative;
+                max-height: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            h1 {
+                font-size: 2em;
+            }
+            .calendar-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <!-- SIDEBAR -->
+        <div class="sidebar">
+            <h2>📚 My Library</h2>
+            
+            <div class="sidebar-section">
+                <h3>
+                    💪 Exercise Videos
+                    <button class="add-btn" onclick="addToLibrary('exercise')">+ Add</button>
+                </h3>
+                <div id="exerciseLibrary"></div>
+            </div>
+            
+            <div class="sidebar-section">
+                <h3>
+                    🍽️ Recipe Links
+                    <button class="add-btn" onclick="addToLibrary('recipe')">+ Add</button>
+                </h3>
+                <div id="recipeLibrary"></div>
+            </div>
+            
+            <div class="sidebar-section">
+                <h3>
+                    🎯 Other Resources
+                    <button class="add-btn" onclick="addToLibrary('other')">+ Add</button>
+                </h3>
+                <div id="otherLibrary"></div>
+            </div>
+            
+            <div class="sidebar-section">
+                <h3>
+                    🤖 AI Assistant Prompts
+                    <button class="add-btn" onclick="addAIPrompt()">+ Add</button>
+                </h3>
+                <p style="font-size: 0.75em; color: #666; margin-bottom: 10px;">Click any prompt to copy it, then paste into Claude or ChatGPT!</p>
+                <div id="aiPromptLibrary"></div>
+            </div>
+            
+            <div class="category-manager">
+                <h3>Custom Categories</h3>
+                <p style="font-size: 0.85em; margin-bottom: 10px; color: #856404;">Add your own categories (e.g., "Cleaning Schedule", "Garden Tasks")</p>
+                <div id="customCategories"></div>
+                <button class="add-btn" onclick="addCustomCategory()">+ Add Category</button>
+            </div>
+        </div>
+        
+        <!-- MAIN CALENDAR -->
+        <div class="container">
+            <header>
+                <h1>🌟 My Weekly Life Calendar</h1>
+                <p class="subtitle">Drag items from the library or click + to add activities</p>
+                <div style="margin-top: 15px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+                    <button onclick="exportData()" style="background: #28a745; color: white; border: none; padding: 8px 20px; border-radius: 8px; cursor: pointer; font-weight: 600;">📤 Export All Data</button>
+                    <button onclick="importData()" style="background: #007bff; color: white; border: none; padding: 8px 20px; border-radius: 8px; cursor: pointer; font-weight: 600;">📥 Import Data</button>
+                    <button onclick="showSyncInstructions()" style="background: #6c757d; color: white; border: none; padding: 8px 20px; border-radius: 8px; cursor: pointer; font-weight: 600;">❓ How to Sync</button>
+                </div>
+            </header>
+
+            <div class="guide">
+                <h3>📋 How to Use</h3>
+                <ul>
+                    <li><strong>Add to Library:</strong> Click "+ Add" in the sidebar to save your favorite recipes & exercise videos</li>
+                    <li><strong>Drag & Drop:</strong> Drag items from the library to any day's section</li>
+                    <li><strong>Quick Add:</strong> Click the "+" button in any section to add an activity directly</li>
+                    <li><strong>Custom Categories:</strong> Add your own categories like "Cleaning Schedule" at the bottom of the sidebar</li>
+                    <li><strong>Sync Between Devices:</strong> Click "📤 Export" on one device, then "📥 Import" on another to sync your data</li>
+                    <li><strong>Edit Anytime:</strong> Click the ✎ button to modify any activity</li>
+                </ul>
+            </div>
+
+            <div id="calendar" class="calendar-grid"></div>
+        </div>
+    </div>
+
+    <!-- MODALS -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <h3>Edit Activity</h3>
+            <label>Activity Name</label>
+            <input type="text" id="editName" placeholder="e.g., Morning Yoga">
+            <label>Link (optional)</label>
+            <input type="url" id="editLink" placeholder="https://...">
+            <label>Notes/Duration (optional)</label>
+            <input type="text" id="editType" placeholder="e.g., 20 minutes">
+            <div class="modal-buttons">
+                <button class="btn-cancel" onclick="closeModal('editModal')">Cancel</button>
+                <button class="btn-save" onclick="saveEdit()">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="libraryModal" class="modal">
+        <div class="modal-content">
+            <h3 id="libraryModalTitle">Add to Library</h3>
+            <label>Name</label>
+            <input type="text" id="libraryName" placeholder="e.g., Qigong Morning Flow">
+            <label>Link</label>
+            <input type="url" id="libraryLink" placeholder="https://youtube.com/...">
+            <div class="modal-buttons">
+                <button class="btn-cancel" onclick="closeModal('libraryModal')">Cancel</button>
+                <button class="btn-save" onclick="saveLibraryItem()">Add</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="categoryModal" class="modal">
+        <div class="modal-content">
+            <h3>Add Custom Category</h3>
+            <label>Category Name</label>
+            <input type="text" id="categoryName" placeholder="e.g., Cleaning Schedule">
+            <label>Emoji Icon (optional)</label>
+            <input type="text" id="categoryIcon" placeholder="e.g., 🧼" maxlength="2">
+            <label>Color</label>
+            <input type="color" id="categoryColor" value="#ffc107">
+            <div class="modal-buttons">
+                <button class="btn-cancel" onclick="closeModal('categoryModal')">Cancel</button>
+                <button class="btn-save" onclick="saveCustomCategory()">Add Category</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="aiPromptModal" class="modal">
+        <div class="modal-content">
+            <h3>Add AI Prompt</h3>
+            <label>Prompt Title</label>
+            <input type="text" id="aiPromptTitle" placeholder="e.g., Help Me Start Decluttering">
+            <label>The Prompt</label>
+            <textarea id="aiPromptText" rows="4" placeholder="e.g., I need to declutter my bedroom but feel overwhelmed. Can you break this down into small 15-minute tasks I can do today?"></textarea>
+            <div class="modal-buttons">
+                <button class="btn-cancel" onclick="closeModal('aiPromptModal')">Cancel</button>
+                <button class="btn-save" onclick="saveAIPrompt()">Add Prompt</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Data structures
+        let weekSchedule = [
+            {
+                day: "Monday",
+                suggestion: "Strength & Reset",
+                activities: {
+                    exercise: [
+                        { name: "Kettlebell Full Body", link: "https://www.youtube.com/watch?v=cKx8xE8jJZs", type: "20-30 min" },
+                        { name: "EFT - Morning Energy", link: "https://www.youtube.com/watch?v=LSUq2lvm8tw", type: "10 min" }
+                    ],
+                    meals: [
+                        { name: "Greek Yogurt Bowl", link: "https://www.eatingwell.com/recipe/7893893/greek-yogurt-berry-bowl/", type: "berries, walnuts" }
+                    ],
+                    declutter: [
+                        { name: "Clear kitchen counter", link: "", type: "15-30 min" }
+                    ],
+                    selfcare: [
+                        { name: "Morning journaling", link: "", type: "10 min" }
+                    ],
+                    chores: [
+                        { name: "Laundry", link: "", type: "Bedding/towels" }
+                    ]
+                }
+            },
+            {
+                day: "Tuesday",
+                suggestion: "Try Tacos! 🌮",
+                activities: {
+                    exercise: [
+                        { name: "Qigong for Vitality", link: "https://www.youtube.com/watch?v=cwlvTcWR3Gs", type: "20-30 min" }
+                    ],
+                    meals: [
+                        { name: "Tacos (suggested)", link: "https://www.loveandlemons.com/vegetarian-tacos/", type: "Customizable!" }
+                    ],
+                    declutter: [
+                        { name: "One drawer - bedroom #1", link: "", type: "15-30 min" }
+                    ],
+                    selfcare: [
+                        { name: "Art time", link: "", type: "20 min" }
+                    ],
+                    chores: [
+                        { name: "Sweep kitchen", link: "", type: "" }
+                    ]
+                }
+            },
+            {
+                day: "Wednesday",
+                suggestion: "Crockpot Day! 🍲",
+                activities: {
+                    exercise: [],
+                    meals: [
+                        { name: "Crockpot Meal (suggested)", link: "https://www.eatingwell.com/recipe/7892234/slow-cooker-mediterranean-chicken/", type: "Set in AM!" }
+                    ],
+                    declutter: [],
+                    selfcare: [],
+                    chores: []
+                }
+            },
+            {
+                day: "Thursday",
+                suggestion: "Flow & Balance",
+                activities: {
+                    exercise: [],
+                    meals: [],
+                    declutter: [],
+                    selfcare: [],
+                    chores: []
+                }
+            },
+            {
+                day: "Friday",
+                suggestion: "Finish Strong!",
+                activities: {
+                    exercise: [],
+                    meals: [],
+                    declutter: [],
+                    selfcare: [],
+                    chores: []
+                }
+            },
+            {
+                day: "Saturday",
+                suggestion: "Active Rest",
+                activities: {
+                    exercise: [],
+                    meals: [],
+                    declutter: [],
+                    selfcare: [],
+                    chores: []
+                }
+            },
+            {
+                day: "Sunday",
+                suggestion: "Prep & Peace",
+                activities: {
+                    exercise: [],
+                    meals: [],
+                    declutter: [],
+                    selfcare: [],
+                    chores: []
+                }
+            }
+        ];
+
+        let library = {
+            exercise: [],
+            recipe: [],
+            other: []
+        };
+
+        let aiPrompts = [
+            {
+                title: "Help Me Start Decluttering",
+                prompt: "I need to declutter [ROOM/AREA] but feel overwhelmed. Can you break this down into small 15-minute tasks I can do today?"
+            },
+            {
+                title: "Meal Planning This Week",
+                prompt: "Can you help me plan 5 healthy Mediterranean-style dinners for this week? I want whole foods, lots of veggies, and simple recipes. Include a grocery list."
+            },
+            {
+                title: "Workout Motivation",
+                prompt: "I'm struggling to stay motivated with my workout routine. Can you give me a pep talk and remind me why this matters for my health goals?"
+            },
+            {
+                title: "Get Unstuck on a Task",
+                prompt: "I've been avoiding [TASK]. Can you help me identify why I'm procrastinating and create a simple first step to get started?"
+            },
+            {
+                title: "Space Planning Ideas",
+                prompt: "I have a [SIZE] room that I want to use for [PURPOSE]. Can you suggest layout ideas and what furniture/storage I might need?"
+            },
+            {
+                title: "Weekly Reset Checklist",
+                prompt: "Create a Sunday reset routine for me that covers: meal prep, planning the week, light cleaning, and self-care. Keep it realistic (2-3 hours max)."
+            },
+            {
+                title: "Decluttering Decision Help",
+                prompt: "I'm stuck deciding what to keep vs donate. I have [DESCRIBE ITEMS]. Can you help me think through this decision?"
+            },
+            {
+                title: "Quick Healthy Breakfast Ideas",
+                prompt: "Give me 5 healthy breakfast ideas that take less than 10 minutes to prepare. I like whole foods and Mediterranean style eating."
+            },
+            {
+                title: "Home Organization System",
+                prompt: "Help me create a simple organization system for [AREA - e.g., paperwork, craft supplies, cleaning products]. I want something I can actually maintain."
+            },
+            {
+                title: "Exercise Alternatives (Bad Weather)",
+                prompt: "The weather is terrible today and I can't walk outside. Give me 3 indoor exercise alternatives that don't require equipment and take 20-30 minutes."
+            },
+            {
+                title: "Self-Compassion Reminder",
+                prompt: "I'm being hard on myself about [SITUATION]. Can you help me reframe this with self-compassion and remind me that progress isn't linear?"
+            },
+            {
+                title: "Evening Wind-Down Routine",
+                prompt: "Help me create a calming evening routine that prepares me for good sleep and sets me up for a productive tomorrow. I have about 30 minutes."
+            }
+        ];
+
+        let customCategories = [];
+        let currentEditData = null;
+        let currentLibraryType = null;
+        let draggedItem = null;
+
+        // Category definitions
+        const categoryDefs = {
+            exercise: { icon: '💪', name: 'EXERCISE', color: '#28a745' },
+            meals: { icon: '🍽️', name: 'MEALS', color: '#fd7e14' },
+            declutter: { icon: '🗂️', name: 'DECLUTTER', color: '#dc3545' },
+            selfcare: { icon: '💜', name: 'SELF-CARE', color: '#6f42c1' },
+            chores: { icon: '🧹', name: 'CHORES', color: '#17a2b8' }
+        };
+
+        // Render functions
+        function renderCalendar() {
+            const calendar = document.getElementById('calendar');
+            calendar.innerHTML = '';
+
+            weekSchedule.forEach((dayData, dayIndex) => {
+                const dayBlock = document.createElement('div');
+                dayBlock.className = 'day-block';
+                
+                let html = `
+                    <div class="day-header">
+                        <div class="day-name">${dayData.day}</div>
+                        <div class="day-suggestion">${dayData.suggestion}</div>
+                    </div>
+                    <div class="day-content">
+                `;
+
+                // Render all default categories
+                Object.keys(categoryDefs).forEach(category => {
+                    html += renderSection(dayIndex, category, dayData.activities[category] || []);
+                });
+
+                // Render custom categories
+                customCategories.forEach(customCat => {
+                    const catKey = customCat.id;
+                    html += renderSection(dayIndex, catKey, dayData.activities[catKey] || [], customCat);
+                });
+
+                html += `</div>`;
+                dayBlock.innerHTML = html;
+                calendar.appendChild(dayBlock);
+            });
+
+            addDropListeners();
+        }
+
+        function renderSection(dayIndex, category, activities, customCat = null) {
+            const def = customCat || categoryDefs[category];
+            if (!def) return '';
+
+            const className = customCat ? 'custom-section' : category + '-section';
+            
+            let html = `
+                <div class="section-compact ${className}" 
+                     data-day="${dayIndex}" 
+                     data-category="${category}"
+                     ondragover="allowDrop(event)"
+                     ondrop="drop(event)">
+                    <div class="section-title-compact">
+                        <span>${def.icon} ${def.name}</span>
+                        <button class="add-activity-btn" onclick="quickAddActivity(${dayIndex}, '${category}')">+</button>
+                    </div>
+            `;
+
+            activities.forEach((activity, idx) => {
+                html += `
+                    <div class="activity-item">
+                        <div class="activity-text">
+                            <div class="activity-name-compact">${activity.name}</div>
+                            ${activity.type ? `<div class="activity-type-compact">${activity.type}</div>` : ''}
+                        </div>
+                        <div class="activity-buttons">
+                            ${activity.link ? `<a href="${activity.link}" target="_blank" class="btn-compact btn-link">▶</a>` : ''}
+                            <button class="btn-compact btn-edit" onclick="editActivity(${dayIndex}, '${category}', ${idx})">✎</button>
+                            <button class="btn-compact btn-remove" onclick="removeActivity(${dayIndex}, '${category}', ${idx})">×</button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            html += `</div>`;
+            return html;
+        }
+
+        function renderLibrary() {
+            renderLibrarySection('exercise', 'exerciseLibrary');
+            renderLibrarySection('recipe', 'recipeLibrary');
+            renderLibrarySection('other', 'otherLibrary');
+            renderAIPrompts();
+        }
+
+        function renderAIPrompts() {
+            const container = document.getElementById('aiPromptLibrary');
+            container.innerHTML = '';
+
+            aiPrompts.forEach((prompt, idx) => {
+                const div = document.createElement('div');
+                div.className = 'ai-prompt-item';
+                div.dataset.promptIndex = idx;
+                
+                div.innerHTML = `
+                    <div class="ai-prompt-title">
+                        ${prompt.title}
+                        <span class="copy-indicator" id="copied-${idx}">✓ Copied!</span>
+                    </div>
+                    <div class="ai-prompt-text">"${prompt.prompt.substring(0, 80)}..."</div>
+                    <div class="ai-prompt-actions">
+                        <button class="btn-small btn-edit-lib" onclick="event.stopPropagation(); editAIPrompt(${idx})">Edit</button>
+                        <button class="btn-small btn-delete" onclick="event.stopPropagation(); deleteAIPrompt(${idx})">Delete</button>
+                    </div>
+                `;
+                
+                div.addEventListener('click', function() {
+                    copyPromptToClipboard(idx);
+                });
+                
+                container.appendChild(div);
+            });
+        }
+
+        function copyPromptToClipboard(idx) {
+            const prompt = aiPrompts[idx];
+            navigator.clipboard.writeText(prompt.prompt).then(() => {
+                const promptDiv = document.querySelector(`[data-prompt-index="${idx}"]`);
+                const indicator = document.getElementById(`copied-${idx}`);
+                
+                promptDiv.classList.add('copied');
+                indicator.style.display = 'inline';
+                
+                setTimeout(() => {
+                    promptDiv.classList.remove('copied');
+                    indicator.style.display = 'none';
+                }, 2000);
+            }).catch(err => {
+                alert('Prompt text: ' + prompt.prompt + '\n\n(Copy this manually - clipboard access failed)');
+            });
+        }
+
+        function addAIPrompt() {
+            document.getElementById('aiPromptTitle').value = '';
+            document.getElementById('aiPromptText').value = '';
+            currentEditData = { aiPromptIndex: -1 };
+            document.getElementById('aiPromptModal').style.display = 'flex';
+        }
+
+        function editAIPrompt(idx) {
+            const prompt = aiPrompts[idx];
+            document.getElementById('aiPromptTitle').value = prompt.title;
+            document.getElementById('aiPromptText').value = prompt.prompt;
+            currentEditData = { aiPromptIndex: idx };
+            document.getElementById('aiPromptModal').style.display = 'flex';
+        }
+
+        function saveAIPrompt() {
+            const title = document.getElementById('aiPromptTitle').value;
+            const text = document.getElementById('aiPromptText').value;
+            
+            if (!title || !text) {
+                alert('Please fill in both title and prompt text');
+                return;
+            }
+            
+            const newPrompt = { title, prompt: text };
+            
+            if (currentEditData && currentEditData.aiPromptIndex !== undefined) {
+                if (currentEditData.aiPromptIndex === -1) {
+                    aiPrompts.push(newPrompt);
+                } else {
+                    aiPrompts[currentEditData.aiPromptIndex] = newPrompt;
+                }
+            }
+            
+            closeModal('aiPromptModal');
+            saveData();
+            renderAIPrompts();
+        }
+
+        function deleteAIPrompt(idx) {
+            if (confirm('Delete this AI prompt?')) {
+                aiPrompts.splice(idx, 1);
+                saveData();
+                renderAIPrompts();
+            }
+        }
+
+        function renderLibrarySection(type, elementId) {
+            const container = document.getElementById(elementId);
+            container.innerHTML = '';
+
+            library[type].forEach((item, idx) => {
+                const div = document.createElement('div');
+                div.className = 'library-item';
+                div.draggable = true;
+                div.dataset.libraryType = type;
+                div.dataset.libraryIndex = idx;
+                
+                div.innerHTML = `
+                    <div class="library-item-name">${item.name}</div>
+                    ${item.link ? `<div class="library-item-link">${item.link.substring(0, 40)}...</div>` : ''}
+                    <div class="library-item-actions">
+                        <button class="btn-small btn-edit-lib" onclick="editLibraryItem('${type}', ${idx})">Edit</button>
+                        <button class="btn-small btn-delete" onclick="deleteLibraryItem('${type}', ${idx})">Delete</button>
+                    </div>
+                `;
+                
+                div.addEventListener('dragstart', handleDragStart);
+                div.addEventListener('dragend', handleDragEnd);
+                
+                container.appendChild(div);
+            });
+        }
+
+        function renderCustomCategories() {
+            const container = document.getElementById('customCategories');
+            container.innerHTML = '';
+
+            customCategories.forEach((cat, idx) => {
+                const div = document.createElement('div');
+                div.className = 'category-item';
+                div.innerHTML = `
+                    <span>${cat.icon} ${cat.name}</span>
+                    <button class="btn-small btn-delete" onclick="deleteCategory(${idx})">Delete</button>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        // Drag and drop
+        function handleDragStart(e) {
+            const type = this.dataset.libraryType;
+            const idx = this.dataset.libraryIndex;
+            draggedItem = library[type][idx];
+            e.dataTransfer.effectAllowed = 'copy';
+            this.style.opacity = '0.5';
+        }
+
+        function handleDragEnd(e) {
+            this.style.opacity = '1';
+        }
+
+        function allowDrop(e) {
+            e.preventDefault();
+            e.currentTarget.classList.add('drop-zone');
+        }
+
+        function drop(e) {
+            e.preventDefault();
+            e.currentTarget.classList.remove('drop-zone');
+            
+            if (!draggedItem) return;
+            
+            const dayIndex = parseInt(e.currentTarget.dataset.day);
+            const category = e.currentTarget.dataset.category;
+            
+            if (!weekSchedule[dayIndex].activities[category]) {
+                weekSchedule[dayIndex].activities[category] = [];
+            }
+            
+            weekSchedule[dayIndex].activities[category].push({
+                name: draggedItem.name,
+                link: draggedItem.link || '',
+                type: draggedItem.type || ''
+            });
+            
+            saveData();
+            renderCalendar();
+            draggedItem = null;
+        }
+
+        function addDropListeners() {
+            document.querySelectorAll('.section-compact').forEach(section => {
+                section.addEventListener('dragleave', function(e) {
+                    this.classList.remove('drop-zone');
+                });
+            });
+        }
+
+        // Activity management
+        function quickAddActivity(dayIndex, category) {
+            currentEditData = {
+                dayIndex,
+                category,
+                activityIndex: -1  // -1 means new
+            };
+            
+            document.getElementById('editName').value = '';
+            document.getElementById('editLink').value = '';
+            document.getElementById('editType').value = '';
+            document.getElementById('editModal').style.display = 'flex';
+        }
+
+        function editActivity(dayIndex, category, activityIndex) {
+            currentEditData = { dayIndex, category, activityIndex };
+            
+            const activity = weekSchedule[dayIndex].activities[category][activityIndex];
+            document.getElementById('editName').value = activity.name;
+            document.getElementById('editLink').value = activity.link || '';
+            document.getElementById('editType').value = activity.type || '';
+            
+            document.getElementById('editModal').style.display = 'flex';
+        }
+
+        function removeActivity(dayIndex, category, activityIndex) {
+            if (confirm('Remove this activity?')) {
+                weekSchedule[dayIndex].activities[category].splice(activityIndex, 1);
+                saveData();
+                renderCalendar();
+            }
+        }
+
+        function saveEdit() {
+            if (!currentEditData) return;
+            
+            const newActivity = {
+                name: document.getElementById('editName').value,
+                link: document.getElementById('editLink').value,
+                type: document.getElementById('editType').value
+            };
+            
+            if (!weekSchedule[currentEditData.dayIndex].activities[currentEditData.category]) {
+                weekSchedule[currentEditData.dayIndex].activities[currentEditData.category] = [];
+            }
+            
+            if (currentEditData.activityIndex === -1) {
+                weekSchedule[currentEditData.dayIndex].activities[currentEditData.category].push(newActivity);
+            } else {
+                weekSchedule[currentEditData.dayIndex].activities[currentEditData.category][currentEditData.activityIndex] = newActivity;
+            }
+            
+            closeModal('editModal');
+            saveData();
+            renderCalendar();
+        }
+
+        // Library management
+        function addToLibrary(type) {
+            currentLibraryType = type;
+            document.getElementById('libraryModalTitle').textContent = `Add ${type === 'exercise' ? 'Exercise Video' : type === 'recipe' ? 'Recipe' : 'Resource'}`;
+            document.getElementById('libraryName').value = '';
+            document.getElementById('libraryLink').value = '';
+            document.getElementById('libraryModal').style.display = 'flex';
+        }
+
+        function saveLibraryItem() {
+            if (!currentLibraryType) return;
+            
+            const item = {
+                name: document.getElementById('libraryName').value,
+                link: document.getElementById('libraryLink').value
+            };
+            
+            if (!item.name) {
+                alert('Please enter a name');
+                return;
+            }
+            
+            library[currentLibraryType].push(item);
+            closeModal('libraryModal');
+            saveData();
+            renderLibrary();
+        }
+
+        function editLibraryItem(type, idx) {
+            currentLibraryType = type;
+            currentEditData = { libraryType: type, libraryIndex: idx };
+            
+            const item = library[type][idx];
+            document.getElementById('libraryName').value = item.name;
+            document.getElementById('libraryLink').value = item.link || '';
+            document.getElementById('libraryModal').style.display = 'flex';
+        }
+
+        function deleteLibraryItem(type, idx) {
+            if (confirm('Delete this item from library?')) {
+                library[type].splice(idx, 1);
+                saveData();
+                renderLibrary();
+            }
+        }
+
+        // Custom categories
+        function addCustomCategory() {
+            document.getElementById('categoryName').value = '';
+            document.getElementById('categoryIcon').value = '';
+            document.getElementById('categoryColor').value = '#ffc107';
+            document.getElementById('categoryModal').style.display = 'flex';
+        }
+
+        function saveCustomCategory() {
+            const name = document.getElementById('categoryName').value;
+            const icon = document.getElementById('categoryIcon').value || '📌';
+            const color = document.getElementById('categoryColor').value;
+            
+            if (!name) {
+                alert('Please enter a category name');
+                return;
+            }
+            
+            const id = 'custom_' + Date.now();
+            customCategories.push({ id, name: name.toUpperCase(), icon, color });
+            
+            // Add this category to all days
+            weekSchedule.forEach(day => {
+                day.activities[id] = [];
+            });
+            
+            closeModal('categoryModal');
+            saveData();
+            renderCustomCategories();
+            renderCalendar();
+        }
+
+        function deleteCategory(idx) {
+            if (confirm('Delete this category? All activities in this category will be removed.')) {
+                const catId = customCategories[idx].id;
+                customCategories.splice(idx, 1);
+                
+                // Remove from all days
+                weekSchedule.forEach(day => {
+                    delete day.activities[catId];
+                });
+                
+                saveData();
+                renderCustomCategories();
+                renderCalendar();
+            }
+        }
+
+        // Modal management
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+            currentEditData = null;
+            currentLibraryType = null;
+        }
+
+        // Data persistence
+        function saveData() {
+            localStorage.setItem('weekSchedule', JSON.stringify(weekSchedule));
+            localStorage.setItem('library', JSON.stringify(library));
+            localStorage.setItem('customCategories', JSON.stringify(customCategories));
+            localStorage.setItem('aiPrompts', JSON.stringify(aiPrompts));
+        }
+
+        function loadData() {
+            const savedSchedule = localStorage.getItem('weekSchedule');
+            const savedLibrary = localStorage.getItem('library');
+            const savedCategories = localStorage.getItem('customCategories');
+            const savedAIPrompts = localStorage.getItem('aiPrompts');
+            
+            if (savedSchedule) weekSchedule = JSON.parse(savedSchedule);
+            if (savedLibrary) library = JSON.parse(savedLibrary);
+            if (savedCategories) customCategories = JSON.parse(savedCategories);
+            if (savedAIPrompts) aiPrompts = JSON.parse(savedAIPrompts);
+        }
+
+        // Export/Import functions for syncing between devices
+        function exportData() {
+            const allData = {
+                weekSchedule: weekSchedule,
+                library: library,
+                customCategories: customCategories,
+                aiPrompts: aiPrompts,
+                exportDate: new Date().toISOString()
+            };
+            
+            const dataStr = JSON.stringify(allData, null, 2);
+            
+            // Copy to clipboard
+            navigator.clipboard.writeText(dataStr).then(() => {
+                alert('✅ All your data has been copied to clipboard!\n\nNow:\n1. Open this calendar on your other device\n2. Click "📥 Import Data"\n3. Paste and click Import\n\nYour data will sync!');
+            }).catch(() => {
+                // Fallback: show in a prompt
+                prompt('Copy this data (Ctrl+C or Cmd+C):', dataStr);
+            });
+        }
+
+        function importData() {
+            const dataStr = prompt('Paste your exported data here:');
+            
+            if (!dataStr) {
+                return; // User cancelled
+            }
+            
+            try {
+                const allData = JSON.parse(dataStr);
+                
+                // Validate the data has the right structure
+                if (!allData.weekSchedule || !allData.library) {
+                    throw new Error('Invalid data format');
+                }
+                
+                // Confirm before overwriting
+                const confirm = window.confirm(
+                    '⚠️ This will replace ALL current data with the imported data.\n\n' +
+                    'Exported on: ' + new Date(allData.exportDate).toLocaleString() + '\n\n' +
+                    'Continue?'
+                );
+                
+                if (!confirm) {
+                    return;
+                }
+                
+                // Import the data
+                weekSchedule = allData.weekSchedule;
+                library = allData.library;
+                customCategories = allData.customCategories || [];
+                aiPrompts = allData.aiPrompts || [];
+                
+                // Save and re-render
+                saveData();
+                renderCalendar();
+                renderLibrary();
+                renderCustomCategories();
+                renderAIPrompts();
+                
+                alert('✅ Data imported successfully!\n\nYour calendar is now synced with the other device.');
+                
+            } catch (error) {
+                alert('❌ Error importing data. Make sure you copied the complete export text.\n\nError: ' + error.message);
+            }
+        }
+
+        function showSyncInstructions() {
+            alert(
+                '📱 How to Sync Between Devices\n\n' +
+                '1️⃣ On Device #1 (where your data is):\n' +
+                '   • Click "📤 Export All Data"\n' +
+                '   • Data is copied to clipboard\n\n' +
+                '2️⃣ On Device #2 (where you want the data):\n' +
+                '   • Click "📥 Import Data"\n' +
+                '   • Paste the data (Cmd+V or Ctrl+V)\n' +
+                '   • Click OK\n\n' +
+                '✨ That\'s it! Your devices are synced.\n\n' +
+                '💡 Tip: Do this whenever you make changes on one device and want them on another device.'
+            );
+        }
+
+        // Initialize
+        window.onload = function() {
+            loadData();
+            renderCalendar();
+            renderLibrary();
+            renderCustomCategories();
+            
+            // Close modals on outside click
+            document.querySelectorAll('.modal').forEach(modal => {
+                modal.addEventListener('click', function(e) {
+                    if (e.target === this) {
+                        closeModal(this.id);
+                    }
+                });
+            });
+        };
+    </script>
+</body>
+</html>
